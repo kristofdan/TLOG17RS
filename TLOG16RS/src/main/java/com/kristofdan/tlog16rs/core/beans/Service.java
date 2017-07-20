@@ -91,7 +91,7 @@ public class Service {
                 return currentTask;
             }
         }
-        Task task = new Task(taskRB.getNewTaskId(), "",
+        Task task = new Task(taskRB.getNewTaskId(), taskRB.getNewComment(),
                 taskRB.getNewStartTime(), taskRB.getNewEndTime());
         day.addTask(task);
         return task;
@@ -106,7 +106,7 @@ public class Service {
         task.setEndTime(taskRB.getNewEndTime());
     }
     
-    public static String deleteTaskFromGivenDay(WorkDay day, DeleteTaskRB taskRB)
+    public static void deleteTaskFromGivenDay(WorkDay day, DeleteTaskRB taskRB)
         throws Exception
     {
         LocalTime startTime = LocalTime.parse(taskRB.getStartTime());
@@ -114,9 +114,7 @@ public class Service {
             if (currentTask.getTaskId().equals(taskRB.getTaskId()) &&
                     currentTask.getStartTime().equals(startTime)){
                 day.getTasks().remove(currentTask);
-                return "Deleted";
             }
         }
-        return "Not deleted";
     }
 }

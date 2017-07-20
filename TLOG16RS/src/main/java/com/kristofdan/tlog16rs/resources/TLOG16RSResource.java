@@ -4,7 +4,9 @@ import javax.ws.rs.*;
 import com.kristofdan.tlog16rs.core.beans.*;
 import static com.kristofdan.tlog16rs.core.beans.Service.*;
 import java.time.LocalDate;
+import java.util.List;
 import javax.ws.rs.core.MediaType;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Uses auxiliary methods from the Service class.
@@ -13,6 +15,7 @@ import javax.ws.rs.core.MediaType;
  */
 
 @Path("/timelogger")
+@Slf4j
 public class TLOG16RSResource {
     
     private TimeLogger logger = new TimeLogger();
@@ -20,13 +23,13 @@ public class TLOG16RSResource {
     @Path("/workmonths")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeLogger listEverything(){
-        return logger;
+    public List<WorkMonth> listEverything(){
+        return logger.getMonths();
     }
     
     @Path("/workmonths")
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)   //Automatikusan konvertál
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public WorkMonth addNewMonth(WorkMonthRB inputMonth)
         throws Exception
@@ -66,17 +69,17 @@ public class TLOG16RSResource {
     @Path("/workmonths/{year}/{month}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public WorkMonth getMonthWithDate(@PathParam("year") int year, @PathParam("month") int month)
+    public List<WorkDay> getMonthWithDate(@PathParam("year") int year, @PathParam("month") int month)
         throws Exception
     {
         WorkMonth inputMonth = new WorkMonth(year, month);
-        return Service.addOrGetMonth(inputMonth, logger);
+        return Service.addOrGetMonth(inputMonth, logger).getDays();
     }
     
     @Path("workmonths/{year}/{month}/{day}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public WorkDay getDayWithDate(@PathParam("year") int year, @PathParam("month") int month,
+    public List<Task> getDayWithDate(@PathParam("year") int year, @PathParam("month") int month,
             @PathParam("day") int day)
         throws Exception
     {
@@ -84,7 +87,7 @@ public class TLOG16RSResource {
         WorkDay inputDay = new WorkDay(year, month, day);
         WorkMonth monthOfTheDay = Service.addOrGetMonth(inputMonth, logger);
         
-        return Service.addOrGetDay(monthOfTheDay,inputDay);
+        return Service.addOrGetDay(monthOfTheDay,inputDay).getTasks();
     }
     
     @Path("workmonths/workdays/tasks/finish")
@@ -119,17 +122,21 @@ public class TLOG16RSResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String deleteTask(DeleteTaskRB inputTask)
+    public void deleteTask(DeleteTaskRB inputTask)
         throws Exception
     {
         WorkDay dayOfNewTask = new WorkDay(inputTask.getYear(),
                 inputTask.getMonth(),inputTask.getDay());
         if (!logger.isNewDay(dayOfNewTask)) {
-            return Service.deleteTaskFromGivenDay(logger.getLastFoundDay(), inputTask);
+            Service.deleteTaskFromGivenDay(logger.getLastFoundDay(), inputTask);
         }
-        return "Not an existing day";
+    }
+    
+    @Path("/workmonths/deleteall")
+    @PUT
+    public void deleteAllMonths(DeleteTaskRB inputTask)
+        throws Exception
+    {
+        logger.getMonths().clear();
     }
 }
-
-
-//TODO: listázást hogyan??
