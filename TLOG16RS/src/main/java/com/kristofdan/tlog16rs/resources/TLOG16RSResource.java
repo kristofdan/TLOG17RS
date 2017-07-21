@@ -1,12 +1,14 @@
 package com.kristofdan.tlog16rs.resources;
 
+import com.avaje.ebean.Ebean;
 import javax.ws.rs.*;
 import com.kristofdan.tlog16rs.core.beans.*;
 import static com.kristofdan.tlog16rs.core.beans.Service.*;
+import com.kristofdan.tlog16rs.entities.TestEntity;
 import java.time.LocalDate;
 import java.util.List;
 import javax.ws.rs.core.MediaType;
-import lombok.extern.slf4j.Slf4j;
+//import lombok.extern.slf4j.Slf4j;
 
 /**
  * Uses auxiliary methods from the Service class.
@@ -15,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Path("/timelogger")
-@Slf4j
+//@Slf4j
 public class TLOG16RSResource {
     
     private TimeLogger logger = new TimeLogger();
@@ -138,5 +140,16 @@ public class TLOG16RSResource {
         throws Exception
     {
         logger.getMonths().clear();
+    }
+    
+    @Path("save/test")
+    @POST
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String saveText(String text){
+        TestEntity testEntity = new TestEntity();
+        testEntity.setText(text);
+        Ebean.save(testEntity);
+        return text;
     }
 }
