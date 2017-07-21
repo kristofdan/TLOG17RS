@@ -17,6 +17,7 @@ public class CreateDataBase {
     EbeanServer ebeanServer;
 
     public CreateDataBase(){
+        updateSchema();
         createDataSourceConfig();
         createServerConfig();
         ebeanServer = EbeanServerFactory.create(serverConfig);
@@ -33,11 +34,15 @@ public class CreateDataBase {
     private void createServerConfig(){
         serverConfig = new ServerConfig();
         serverConfig.setName("timelogger");
-        serverConfig.setDdlGenerate(true);
-        serverConfig.setDdlRun(true);
+        serverConfig.setDdlGenerate(false);
+        serverConfig.setDdlRun(false);
         serverConfig.setRegister(true);
         serverConfig.setDataSourceConfig(dataSourceConfig);
         serverConfig.addClass(TestEntity.class);
         serverConfig.setDefaultServer(true);
+    }
+    
+    private void updateSchema(){
+        
     }
 }

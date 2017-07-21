@@ -33,7 +33,7 @@ dependencies {
     compile group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '1.5.2'
     compile 'org.avaje.ebeanorm:avaje-ebeanorm:7.1.1'
     compile 'org.avaje.ebeanorm:avaje-ebeanorm-agent:4.9.1'
-	
+    compile 'org.liquibase:liquibase-core:3.3.5'
 }
 
 run {

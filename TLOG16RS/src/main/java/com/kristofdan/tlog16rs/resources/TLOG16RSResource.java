@@ -8,7 +8,7 @@ import com.kristofdan.tlog16rs.entities.TestEntity;
 import java.time.LocalDate;
 import java.util.List;
 import javax.ws.rs.core.MediaType;
-//import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Uses auxiliary methods from the Service class.
@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
  */
 
 @Path("/timelogger")
-//@Slf4j
+@Slf4j
 public class TLOG16RSResource {
     
     private TimeLogger logger = new TimeLogger();
@@ -36,9 +36,14 @@ public class TLOG16RSResource {
     public WorkMonth addNewMonth(WorkMonthRB inputMonth)
         throws Exception
     {
-        WorkMonth newMonth = new WorkMonth(inputMonth.getYear(), inputMonth.getMonth());
-        logger.addMonth(newMonth);
-        return newMonth;
+        try {
+            WorkMonth newMonth = new WorkMonth(inputMonth.getYear(), inputMonth.getMonth());
+            logger.addMonth(newMonth);
+            return newMonth;
+        } catch (Exception e) {
+            log.error("Exception in method addNewMonth",e);
+            return null;
+        }
     }
     
     @Path("/workmonths/workdays")
@@ -48,8 +53,14 @@ public class TLOG16RSResource {
     public WorkDay addNewWorkDay(WorkDayRB inputDay)
         throws Exception
     {
-        WorkMonth monthOfNewDay = new WorkMonth(inputDay.getYear(), inputDay.getMonth());
-        return Service.addDayAndCreateMonthIfNecessary(logger, inputDay);
+        try {
+            WorkMonth monthOfNewDay = new WorkMonth(inputDay.getYear(), inputDay.getMonth());
+            return Service.addDayAndCreateMonthIfNecessary(logger, inputDay);
+        } catch (Exception e) {
+            log.error("Exception in method addNewWorkDay", e);
+            return null;
+        }
+        
     }
     
     @Path("/workmonths/workdays/tasks/start")
@@ -59,13 +70,19 @@ public class TLOG16RSResource {
     public Task addNewTaskWithStartTime(StartTaskRB inputTask)
         throws Exception
     {
-        Task task = new Task(inputTask.getTaskID(), inputTask.getComment(),
+        try {
+            Task task = new Task(inputTask.getTaskID(), inputTask.getComment(),
                 inputTask.getStartTime(), inputTask.getStartTime());
-        LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
+            LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
                 inputTask.getDay());
-        WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
-        dayOfNewTask.addTask(task);
-        return task;
+            WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
+            dayOfNewTask.addTask(task);
+            return task;
+        } catch (Exception e) {
+            log.error("Exception in method addNewTaskWithStartTime", e);
+            return null;
+        }
+        
     }
     
     @Path("/workmonths/{year}/{month}")
@@ -74,8 +91,14 @@ public class TLOG16RSResource {
     public List<WorkDay> getMonthWithDate(@PathParam("year") int year, @PathParam("month") int month)
         throws Exception
     {
-        WorkMonth inputMonth = new WorkMonth(year, month);
-        return Service.addOrGetMonth(inputMonth, logger).getDays();
+        try {
+            WorkMonth inputMonth = new WorkMonth(year, month);
+            return Service.addOrGetMonth(inputMonth, logger).getDays();
+        } catch (Exception e) {
+            log.error("Exception in method getMonthWithDate", e);
+            return null;
+        }
+        
     }
     
     @Path("workmonths/{year}/{month}/{day}")
@@ -85,11 +108,16 @@ public class TLOG16RSResource {
             @PathParam("day") int day)
         throws Exception
     {
-        WorkMonth inputMonth = new WorkMonth(year, month);
-        WorkDay inputDay = new WorkDay(year, month, day);
-        WorkMonth monthOfTheDay = Service.addOrGetMonth(inputMonth, logger);
+        try {
+            WorkMonth inputMonth = new WorkMonth(year, month);
+            WorkDay inputDay = new WorkDay(year, month, day);
+            WorkMonth monthOfTheDay = Service.addOrGetMonth(inputMonth, logger);
+            return Service.addOrGetDay(monthOfTheDay,inputDay).getTasks();
+        } catch (Exception e) {
+            log.error("Exception in method getDayWithDate", e);
+            return null;
+        }
         
-        return Service.addOrGetDay(monthOfTheDay,inputDay).getTasks();
     }
     
     @Path("workmonths/workdays/tasks/finish")
@@ -99,12 +127,17 @@ public class TLOG16RSResource {
     public Task finishTask(FinishingTaskRB inputTask)
         throws Exception
     {
-        Task task = new Task(inputTask.getTaskID(), "",
+        try {
+            Task task = new Task(inputTask.getTaskID(), "",
                 inputTask.getStartTime(), inputTask.getEndTime());
-        LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
-                inputTask.getDay());
-        WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
-        return Service.createOrFinishTaskForGivenDay(dayOfNewTask, task);
+            LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
+                    inputTask.getDay());
+            WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
+            return Service.createOrFinishTaskForGivenDay(dayOfNewTask, task);
+        } catch (Exception e) {
+            log.error("Exception in method finishTask", e);
+            return null;
+        }
     }
     
     @Path("workmonths/workdays/tasks/modify")
@@ -114,10 +147,15 @@ public class TLOG16RSResource {
     public Task modifyTask(ModifyTaskRB inputTask)
         throws Exception
     {
-        LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
+        try {
+            LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
                 inputTask.getDay());
-        WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
-        return Service.createOrModifyTaskForGivenDay(dayOfNewTask, inputTask);
+            WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
+            return Service.createOrModifyTaskForGivenDay(dayOfNewTask, inputTask);
+        } catch (Exception e) {
+            log.error("Exception in method modifyTask", e);
+            return null;
+        }
     }
     
     @Path("/workmonths/workdays/tasks/delete")
@@ -127,17 +165,20 @@ public class TLOG16RSResource {
     public void deleteTask(DeleteTaskRB inputTask)
         throws Exception
     {
-        WorkDay dayOfNewTask = new WorkDay(inputTask.getYear(),
+        try {
+            WorkDay dayOfNewTask = new WorkDay(inputTask.getYear(),
                 inputTask.getMonth(),inputTask.getDay());
-        if (!logger.isNewDay(dayOfNewTask)) {
-            Service.deleteTaskFromGivenDay(logger.getLastFoundDay(), inputTask);
+            if (!logger.isNewDay(dayOfNewTask)) {
+                Service.deleteTaskFromGivenDay(logger.getLastFoundDay(), inputTask);
+            }
+        } catch (Exception e) {
+            log.error("Exception in method deleteTask", e);
         }
     }
     
     @Path("/workmonths/deleteall")
     @PUT
     public void deleteAllMonths(DeleteTaskRB inputTask)
-        throws Exception
     {
         logger.getMonths().clear();
     }
