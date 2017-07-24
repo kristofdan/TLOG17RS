@@ -25,7 +25,7 @@ public class TLOG16RSApplication extends Application<TLOG16RSConfiguration> {
     @Override
     public void run(final TLOG16RSConfiguration configuration,
                     final Environment environment) {
-        CreateDataBase createDataBase = new CreateDataBase();
+        CreateDataBase createDataBase = new CreateDataBase(configuration);
         environment.jersey().register(new TLOG16RSResource());
     }
 }

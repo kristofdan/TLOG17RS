@@ -3,6 +3,7 @@ package com.kristofdan.tlog16rs.core.beans;
 import com.avaje.ebean.*;
 import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
+import com.kristofdan.tlog16rs.TLOG16RSConfiguration;
 import com.kristofdan.tlog16rs.entities.TestEntity;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,28 +24,28 @@ public class CreateDataBase {
     ServerConfig serverConfig;
     EbeanServer ebeanServer;
 
-    public CreateDataBase(){
+    public CreateDataBase(TLOG16RSConfiguration config){
         try {
-            updateSchema();
+            updateSchema(config);
         } catch (Exception e) {
             log.error("Error in method updateSchema", e);
         }
-        createDataSourceConfig();
-        createServerConfig();
+        createDataSourceConfig(config);
+        createServerConfig(config);
         ebeanServer = EbeanServerFactory.create(serverConfig);
     }
     
-    private void createDataSourceConfig(){
+    private void createDataSourceConfig(TLOG16RSConfiguration config){
         dataSourceConfig = new DataSourceConfig();
-        dataSourceConfig.setDriver("org.mariadb.jdbc.Driver");
-        dataSourceConfig.setUrl("jdbc:mariadb://127.0.0.1:9001/timelogger");
-        dataSourceConfig.setUsername("timelogger");
-        dataSourceConfig.setPassword("633Ym2aZ5b9Wtzh4EJc4pANx");
+        dataSourceConfig.setDriver(config.getDriver());
+        dataSourceConfig.setUrl(config.getUrl());
+        dataSourceConfig.setUsername(config.getUsername());
+        dataSourceConfig.setPassword(config.getPassword());
     }
     
-    private void createServerConfig(){
+    private void createServerConfig(TLOG16RSConfiguration config){
         serverConfig = new ServerConfig();
-        serverConfig.setName(System.getProperty("configname"));
+        serverConfig.setName(config.getConfigname());
         serverConfig.setDdlGenerate(false);
         serverConfig.setDdlRun(false);
         serverConfig.setRegister(true);
@@ -53,14 +54,14 @@ public class CreateDataBase {
         serverConfig.setDefaultServer(true);
     }
     
-    private void updateSchema()
+    private void updateSchema(TLOG16RSConfiguration config)
         throws Exception
     {
-        Class.forName(System.getProperty("driver"));               //Loading the driver
+        Class.forName(config.getDriver());               //Loading the driver
         Connection connection = DriverManager.getConnection(
-                System.getProperty("url"),
-                System.getProperty("username"),
-                System.getProperty("password"));
+                (config.getUrl()),
+                (config.getUsername()),
+                (config.getPassword()));
         Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
                 new JdbcConnection(connection));
         Liquibase liquibase = new Liquibase(
@@ -69,5 +70,3 @@ public class CreateDataBase {
         liquibase.update(new Contexts(), new LabelExpression());
     }
 }
-//jdbc:mysql://localhost:9001/?user=timelogger?password=633Ym2aZ5b9Wtzh4EJc4pANx
-//jdbc:mariadb://localhost:9001/","timelogger","633Ym2aZ5b9Wtzh4EJc4pANx
