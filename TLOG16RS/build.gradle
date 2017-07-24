@@ -38,6 +38,7 @@ dependencies {
 
 run {
  args 'server'
+ systemProperties = System.properties
 }
 
 classes.doLast {
