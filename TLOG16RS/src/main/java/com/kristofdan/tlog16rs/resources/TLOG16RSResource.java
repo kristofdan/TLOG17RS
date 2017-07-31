@@ -4,8 +4,8 @@ import com.avaje.ebean.Ebean;
 import javax.ws.rs.*;
 import com.kristofdan.tlog16rs.core.beans.*;
 import static com.kristofdan.tlog16rs.core.beans.Service.*;
-import com.kristofdan.tlog16rs.entities.TestEntity;
 import java.time.LocalDate;
+import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.core.MediaType;
 import lombok.extern.slf4j.Slf4j;
@@ -20,13 +20,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TLOG16RSResource {
     
-    private TimeLogger logger = new TimeLogger();
+    private TimeLogger logger;
+
+    public TLOG16RSResource() {
+        logger = Ebean.find(TimeLogger.class).findUnique();
+        if (logger == null){
+            logger = new TimeLogger("Kristóf Dan");
+        }
+    }
     
     @Path("/workmonths")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<WorkMonth> listEverything(){
-        return logger.getMonths();
+        return Ebean.find(WorkMonth.class).findList();
     }
     
     @Path("/workmonths")
@@ -39,6 +46,8 @@ public class TLOG16RSResource {
         try {
             WorkMonth newMonth = new WorkMonth(inputMonth.getYear(), inputMonth.getMonth());
             logger.addMonth(newMonth);
+            
+            Ebean.save(logger);
             return newMonth;
         } catch (Exception e) {
             log.error("Exception in method addNewMonth",e);
@@ -54,8 +63,10 @@ public class TLOG16RSResource {
         throws Exception
     {
         try {
-            WorkMonth monthOfNewDay = new WorkMonth(inputDay.getYear(), inputDay.getMonth());
-            return Service.addDayAndCreateMonthIfNecessary(logger, inputDay);
+            WorkDay newDay = Service.addDayAndCreateMonthIfNecessary(logger, inputDay);
+            
+            Ebean.save(logger);
+            return newDay;
         } catch (Exception e) {
             log.error("Exception in method addNewWorkDay", e);
             return null;
@@ -77,6 +88,8 @@ public class TLOG16RSResource {
                 inputTask.getDay());
             WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
             dayOfNewTask.addTask(task);
+            
+            Ebean.save(logger);
             return task;
         } catch (Exception e) {
             log.error("Exception in method addNewTaskWithStartTime", e);
@@ -92,8 +105,18 @@ public class TLOG16RSResource {
         throws Exception
     {
         try {
-            WorkMonth inputMonth = new WorkMonth(year, month);
-            return Service.addOrGetMonth(inputMonth, logger).getDays();
+            String dateOfMonth = LocalDate.of(year, month, 1).toString();
+            boolean monthNotExists = Ebean.find(WorkMonth.class).
+                    where().eq("date", dateOfMonth).findUnique()
+                    == null;
+            if (monthNotExists){
+                logger.addMonth(new WorkMonth(year, month));
+                Ebean.save(logger);
+                return new LinkedList<>();
+            }else {
+                return Ebean.find(WorkDay.class).fetch("workMonth").
+                    where().eq("date", dateOfMonth).findList();
+            }
         } catch (Exception e) {
             log.error("Exception in method getMonthWithDate", e);
             return null;
@@ -109,10 +132,33 @@ public class TLOG16RSResource {
         throws Exception
     {
         try {
-            WorkMonth inputMonth = new WorkMonth(year, month);
-            WorkDay inputDay = new WorkDay(year, month, day);
-            WorkMonth monthOfTheDay = Service.addOrGetMonth(inputMonth, logger);
-            return Service.addOrGetDay(monthOfTheDay,inputDay).getTasks();
+            String dateOfDay = LocalDate.of(year, month, day).toString();
+            String dateOfMonth = LocalDate.of(year, month, 1).toString();
+            
+            boolean dayExists = Ebean.find(WorkDay.class).
+                    where().eq("actual_day", dateOfDay).findUnique()
+                    != null;
+            boolean monthExists = Ebean.find(WorkMonth.class).
+                    where().eq("date", dateOfMonth).findUnique()
+                    != null;
+            
+            if (dayExists){
+                return Ebean.find(Task.class).fetch("workDay","actualDay").
+                    where().eq("actual_day",dateOfDay).findList();
+            }else if(monthExists){
+                logger.getMonthWithDate(year, month).addWorkDay(new WorkDay(year, month, day));
+                Ebean.save(logger);
+                return new LinkedList<>();
+            }else {
+                WorkMonth newMonth = new WorkMonth(year, month);
+                newMonth.addWorkDay(new WorkDay(year, month, day));
+                logger.addMonth(newMonth);
+                
+                Ebean.save(logger);
+                return new LinkedList<>();
+            }
+            
+            
         } catch (Exception e) {
             log.error("Exception in method getDayWithDate", e);
             return null;
@@ -128,12 +174,16 @@ public class TLOG16RSResource {
         throws Exception
     {
         try {
-            Task task = new Task(inputTask.getTaskID(), "",
+            Task taskToFinish = new Task(inputTask.getTaskID(), "",
                 inputTask.getStartTime(), inputTask.getEndTime());
-            LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
+            LocalDate dateOfTask = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
                     inputTask.getDay());
-            WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
-            return Service.createOrFinishTaskForGivenDay(dayOfNewTask, task);
+            WorkDay dayOfNewTask = createOrGetDayForDate(dateOfTask, logger);
+            Task finishedTask = dayOfNewTask.createOrFinishTask(taskToFinish, inputTask.getEndTime());
+            updateStatisticsForMonthContainingDay(dayOfNewTask, logger);
+            
+            Ebean.save(logger);
+            return finishedTask;
         } catch (Exception e) {
             log.error("Exception in method finishTask", e);
             return null;
@@ -148,10 +198,18 @@ public class TLOG16RSResource {
         throws Exception
     {
         try {
-            LocalDate date = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
+            LocalDate dateOfTask = LocalDate.of(inputTask.getYear(), inputTask.getMonth(),
                 inputTask.getDay());
-            WorkDay dayOfNewTask = createOrGetDayForDate(date, logger);
-            return Service.createOrModifyTaskForGivenDay(dayOfNewTask, inputTask);
+            WorkDay dayOfTask = createOrGetDayForDate(dateOfTask, logger);
+            Task taskToModify = new Task(inputTask.getTaskId(),"",
+                    inputTask.getStartTime(),inputTask.getStartTime());
+            Task newValues = new Task(inputTask.getNewTaskId(),inputTask.getNewComment(),
+                    inputTask.getNewStartTime(),inputTask.getNewEndTime());
+            Task modifiedTask = dayOfTask.createOrModifyTask(taskToModify, newValues);
+            updateStatisticsForMonthContainingDay(dayOfTask, logger);
+            
+            Ebean.save(logger);
+            return modifiedTask;
         } catch (Exception e) {
             log.error("Exception in method modifyTask", e);
             return null;
@@ -169,7 +227,13 @@ public class TLOG16RSResource {
             WorkDay dayOfNewTask = new WorkDay(inputTask.getYear(),
                 inputTask.getMonth(),inputTask.getDay());
             if (!logger.isNewDay(dayOfNewTask)) {
-                Service.deleteTaskFromGivenDay(logger.getLastFoundDay(), inputTask);
+                Task taskToDelete = new Task(inputTask.getTaskId(), "",
+                        inputTask.getStartTime(), inputTask.getStartTime());
+                Task deletedTask = logger.getLastFoundDay().deleteTask(taskToDelete);
+                updateStatisticsForMonthContainingDay(dayOfNewTask, logger);
+                
+                Ebean.delete(deletedTask);
+                Ebean.save(logger);
             }
         } catch (Exception e) {
             log.error("Exception in method deleteTask", e);
@@ -178,19 +242,8 @@ public class TLOG16RSResource {
     
     @Path("/workmonths/deleteall")
     @PUT
-    public void deleteAllMonths(DeleteTaskRB inputTask)
-    {
+    public void deleteAllMonths(DeleteTaskRB inputTask){
+        Ebean.deleteAll(logger.getMonths());
         logger.getMonths().clear();
-    }
-    
-    @Path("save/test")
-    @POST
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String saveText(String text){
-        TestEntity testEntity = new TestEntity();
-        testEntity.setText(text);
-        Ebean.save(testEntity);
-        return text;
     }
 }

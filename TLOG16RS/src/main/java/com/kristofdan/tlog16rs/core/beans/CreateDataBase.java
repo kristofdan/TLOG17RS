@@ -4,13 +4,12 @@ import com.avaje.ebean.*;
 import com.avaje.ebean.config.DataSourceConfig;
 import com.avaje.ebean.config.ServerConfig;
 import com.kristofdan.tlog16rs.TLOG16RSConfiguration;
-import com.kristofdan.tlog16rs.entities.TestEntity;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import liquibase.*;
 import liquibase.database.*;
 import liquibase.database.jvm.JdbcConnection;
-import liquibase.resource.FileSystemResourceAccessor;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -50,7 +49,10 @@ public class CreateDataBase {
         serverConfig.setDdlRun(false);
         serverConfig.setRegister(true);
         serverConfig.setDataSourceConfig(dataSourceConfig);
-        serverConfig.addClass(TestEntity.class);
+        serverConfig.addClass(TimeLogger.class);
+        serverConfig.addClass(WorkMonth.class);
+        serverConfig.addClass(WorkDay.class);
+        serverConfig.addClass(Task.class);
         serverConfig.setDefaultServer(true);
     }
     
@@ -65,8 +67,7 @@ public class CreateDataBase {
         Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
                 new JdbcConnection(connection));
         Liquibase liquibase = new Liquibase(
-                "/home/kristof/Precognox/POLC/REST service with Dropwizard/TLOG16RS/src/main/resources/migrations.xml",
-                new FileSystemResourceAccessor(), database);
+                "migrations.xml", new ClassLoaderResourceAccessor(), database);
         liquibase.update(new Contexts(), new LabelExpression());
     }
 }

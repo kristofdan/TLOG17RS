@@ -1,7 +1,7 @@
 package com.kristofdan.tlog16rs.core.beans;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.YearMonth;
 
 /**
  * Auxiliary methods for the TLOG16Resource class.
@@ -10,6 +10,11 @@ import java.time.LocalTime;
  */
 
 public class Service {
+    
+    public static void updateStatisticsForMonthContainingDay(WorkDay day, TimeLogger logger){
+        YearMonth dateOfMonth = YearMonth.of(day.getActualDay().getYear(), day.getActualDay().getMonthValue());
+        logger.updateStatisticsForMonth(dateOfMonth);
+    }
     
     public static WorkMonth addOrGetMonth(WorkMonth month, TimeLogger logger)
         throws Exception
@@ -79,42 +84,5 @@ public class Service {
         }
         day.addTask(task);
         return task;
-    }
-    
-    public static Task createOrModifyTaskForGivenDay(WorkDay day, ModifyTaskRB taskRB)
-        throws Exception
-    {
-        for (Task currentTask : day.getTasks()) {
-            if (currentTask.getTaskId().equals(taskRB.getTaskId()) &&
-                    currentTask.getStartTime().toString().equals(taskRB.getStartTime())){
-                modifyTask(currentTask, taskRB);
-                return currentTask;
-            }
-        }
-        Task task = new Task(taskRB.getNewTaskId(), taskRB.getNewComment(),
-                taskRB.getNewStartTime(), taskRB.getNewEndTime());
-        day.addTask(task);
-        return task;
-    }
-    
-    private static void modifyTask(Task task, ModifyTaskRB taskRB)
-        throws Exception
-    {
-        task.setTaskId(taskRB.getNewTaskId());
-        task.setComment(taskRB.getNewComment());
-        task.setStartTimeWithoutChecks(taskRB.getNewStartTime());
-        task.setEndTime(taskRB.getNewEndTime());
-    }
-    
-    public static void deleteTaskFromGivenDay(WorkDay day, DeleteTaskRB taskRB)
-        throws Exception
-    {
-        LocalTime startTime = LocalTime.parse(taskRB.getStartTime());
-        for (Task currentTask : day.getTasks()) {
-            if (currentTask.getTaskId().equals(taskRB.getTaskId()) &&
-                    currentTask.getStartTime().equals(startTime)){
-                day.getTasks().remove(currentTask);
-            }
-        }
     }
 }

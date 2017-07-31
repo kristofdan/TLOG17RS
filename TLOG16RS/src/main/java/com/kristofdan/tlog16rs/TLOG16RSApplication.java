@@ -19,7 +19,7 @@ public class TLOG16RSApplication extends Application<TLOG16RSConfiguration> {
 
     @Override
     public void initialize(final Bootstrap<TLOG16RSConfiguration> bootstrap) {
-        // TODO: application initialization
+        //Initialization not needed
     }
 
     @Override

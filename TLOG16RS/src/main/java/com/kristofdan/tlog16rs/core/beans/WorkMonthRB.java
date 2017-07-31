@@ -2,7 +2,6 @@ package com.kristofdan.tlog16rs.core.beans;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  *

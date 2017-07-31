@@ -1,10 +1,15 @@
 package com.kristofdan.tlog16rs.core.beans;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.*;
 import java.util.regex.*;
 import lombok.Getter;
 import lombok.Setter;
 import com.kristofdan.tlog16rs.core.exceptions.*;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 /**
  * A task is represented by a task ID, a description (comment), a start and an end time.
@@ -14,12 +19,22 @@ import com.kristofdan.tlog16rs.core.exceptions.*;
 
 @Getter
 @Setter
-
+@Entity
 public class Task {
     private String taskId;
     private LocalTime startTime;
     private LocalTime endTime;
     private String comment;
+    private long minPerTask;
+    
+    @Id
+    @GeneratedValue
+    @JsonIgnore
+    Integer id;
+    
+    @ManyToOne
+    @JsonIgnore
+    private WorkDay workDay;
     
     /**
      * Constructs startTime and endTime from integer values.
@@ -27,13 +42,13 @@ public class Task {
     public Task(String taskId, String comment, int startHour, int startMinute, int endHour, int endMinute)
         throws Exception
     {
-        LocalTime startTime = LocalTime.of(startHour, startMinute);
-        LocalTime endTime = LocalTime.of(endHour, endMinute);
-        checkIfValidTimeOrder(startTime,endTime);
+        LocalTime startTimeInput = LocalTime.of(startHour, startMinute);
+        LocalTime endTimeInput = LocalTime.of(endHour, endMinute);
+        checkIfValidTimeOrder(startTimeInput,endTimeInput);
         setTaskIdIfValid(taskId);
         this.comment = comment;
-        this.startTime = startTime;
-        setEndTimeSoThatDurationIsMultipleQuarterHour(startTime,endTime);
+        this.startTime = startTimeInput;
+        setEndTimeSoThatDurationIsMultipleQuarterHour(startTimeInput,endTimeInput);
     }
     
     /**
@@ -42,13 +57,13 @@ public class Task {
     public Task(String taskId, String comment, String startTimeString, String endTimeString)
         throws Exception
     {
-        LocalTime startTime = LocalTime.parse(startTimeString);
-        LocalTime endTime = LocalTime.parse(endTimeString);
-        checkIfValidTimeOrder(startTime,endTime);
+        LocalTime startTimeInput = LocalTime.parse(startTimeString);
+        LocalTime endTimeInput = LocalTime.parse(endTimeString);
+        checkIfValidTimeOrder(startTimeInput,endTimeInput);
         setTaskIdIfValid(taskId);
         this.comment = comment;
-        this.startTime = startTime;
-        setEndTimeSoThatDurationIsMultipleQuarterHour(startTime,endTime);
+        this.startTime = startTimeInput;
+        setEndTimeSoThatDurationIsMultipleQuarterHour(startTimeInput,endTimeInput);
     }
 
     public Task(String taskId) throws Exception {
@@ -83,9 +98,10 @@ public class Task {
         throws Exception
     {
         this.endTime = Util.roundToMultipleQuarterHour(startTime, endTime);
+        minPerTask = calculateMinPerTask();
     }
-    
-    public long getMinPerTask() 
+
+    public long calculateMinPerTask() 
         throws Exception
     {
         if (startTime == null || endTime == null){
@@ -129,6 +145,16 @@ public class Task {
         }
     }
     
+    public long getMinPerTask()
+        throws Exception
+    {
+        if (startTime == null || endTime == null){
+            throw new EmptyTimeFieldException("Error: end time missing from task");
+        }else {
+            return minPerTask;
+        }
+    }
+    
     public void setTaskId(String taskId)
         throws Exception
     {
@@ -139,15 +165,19 @@ public class Task {
         throws Exception 
     {
         LocalTime newStartTime = LocalTime.of(hour, minute);
-        checkIfValidTimeOrder(newStartTime,endTime);
-        startTime = newStartTime;
-        setEndTimeSoThatDurationIsMultipleQuarterHour(startTime, endTime);
+        setStartTime(newStartTime);
     }
     
     public void setStartTime(String startTimeAsString)
         throws Exception
     {
         LocalTime newStartTime = LocalTime.parse(startTimeAsString);
+        setStartTime(newStartTime);
+    }
+    
+    private void setStartTime(LocalTime newStartTime)
+        throws Exception
+    {
         checkIfValidTimeOrder(newStartTime,endTime);
         startTime = newStartTime;
         setEndTimeSoThatDurationIsMultipleQuarterHour(startTime, endTime);
@@ -155,10 +185,9 @@ public class Task {
     
     /**
      * Doesn't check if startTime is earlier than endTime, and doesn't round the interval.
+     * Doesn't update minPerTask, should be you used together with setEndTime.
      */
-    public void setStartTimeWithoutChecks(String startTimeAsString)
-        throws Exception
-    {
+    public void setStartTimeWithoutChecks(String startTimeAsString){
         LocalTime newStartTime = LocalTime.parse(startTimeAsString);
         startTime = newStartTime;
     }

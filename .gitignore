@@ -31,8 +31,14 @@ release.properties
 nb-configuration.xml
 atlassian-ide-plugin.xml
 
-logs
-
 # SQL
 
 *.sql
+
+# Database
+
+TLOG16RS/database
+
+# Liquibase
+
+TLOG16RS/private
