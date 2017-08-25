@@ -39,22 +39,24 @@ public class Service {
         return day;
     }
     
-    public static WorkDay addDayAndCreateMonthIfNecessary(TimeLogger logger, WorkDay day)
+    public static WorkDay addDayAndCreateMonthIfNecessary(
+            TimeLogger logger, WorkDay day, boolean isWeekday)
         throws Exception
     {
         WorkMonth monthOfTheDay = new WorkMonth(day.getActualDay().getYear(),
                 day.getActualDay().getMonthValue());
         monthOfTheDay = addOrGetMonth(monthOfTheDay, logger);
-        monthOfTheDay.addWorkDay(day);
+        monthOfTheDay.addWorkDay(day,!isWeekday);
         return day;
     }
     
-    public static WorkDay addDayAndCreateMonthIfNecessary(TimeLogger logger, WorkDayRB dayRB)
+    public static WorkDay addDayAndCreateMonthIfNecessary(
+            TimeLogger logger, WorkDayRB dayRB, boolean isWeekday)
         throws Exception
     {
         WorkDay day = new WorkDay(dayRB.getRequiredMinPerDay(), dayRB.getYear(),
                 dayRB.getMonth(), dayRB.getDay());
-        return addDayAndCreateMonthIfNecessary(logger, day);
+        return addDayAndCreateMonthIfNecessary(logger, day, isWeekday);
     }
     
     public static WorkDay createOrGetDayForDate(LocalDate date, TimeLogger logger)

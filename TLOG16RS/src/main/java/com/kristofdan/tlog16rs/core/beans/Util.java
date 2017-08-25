@@ -5,6 +5,7 @@ import java.util.*;
 import java.time.temporal.ChronoField;
 import com.kristofdan.tlog16rs.core.exceptions.EmptyTimeFieldException;
 import com.kristofdan.tlog16rs.core.exceptions.NotExpectedTimeOrder;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Utility functions for the non-IU classes of this package. 
@@ -100,5 +101,28 @@ public class Util {
         long minuteDiff =
                 endTime.getLong(ChronoField.MINUTE_OF_HOUR) - startTime.getLong(ChronoField.MINUTE_OF_HOUR);
         return hourDiff * 60 + minuteDiff;
+    }
+    
+    public static LocalTime toLocalTime(String timeString){
+        int indexOfColon = timeString.indexOf(":");
+        int lengthOfString = timeString.length();
+        DateTimeFormatter formatter = createFormatter(indexOfColon,lengthOfString);
+        return LocalTime.parse(timeString, formatter);
+    }
+    
+    private static DateTimeFormatter createFormatter(int indexOfColon, int lengthOfString){
+        DateTimeFormatter formatter;
+        if (indexOfColon == -1){
+            if (lengthOfString == 4){
+                formatter =  DateTimeFormatter.ofPattern("HHmm");
+            }else {
+                formatter =  DateTimeFormatter.ofPattern("Hmm");
+            }
+        }else if(indexOfColon == 2){
+            formatter =  DateTimeFormatter.ofPattern("HH:mm");
+        }else {
+            formatter =  DateTimeFormatter.ofPattern("H:mm");
+        }
+        return formatter;
     }
 }

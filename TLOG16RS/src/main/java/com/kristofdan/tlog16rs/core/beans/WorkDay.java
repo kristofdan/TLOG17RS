@@ -118,15 +118,14 @@ public class WorkDay {
      * Searches for the Task based on taskId and startTime.
      * Modifies the endTime if the task exists, otherwise inserts taskToFinish with the new endTime.
      */
-    public Task createOrFinishTask(Task taskToFinish, String newEndTime)
+    public Task createOrFinishTask(Task taskToFinish)
         throws Exception
     {
-        taskToFinish.setEndTime(newEndTime);
         for (Task currentTask : tasks) {
             if (currentTask.getTaskId().equals(taskToFinish.getTaskId()) &&
                     currentTask.getStartTime().equals(taskToFinish.getStartTime())){
                 updateStatistics(currentTask, taskToFinish);
-                currentTask.setEndTime(newEndTime);
+                currentTask.setEndTime(taskToFinish.getEndTime().toString());
                 return currentTask;
             }
         }

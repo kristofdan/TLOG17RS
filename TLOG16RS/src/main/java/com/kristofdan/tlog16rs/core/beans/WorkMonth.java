@@ -10,8 +10,6 @@ import javax.persistence.*;
  * A workmonth is represented by the days within it, it's date, the reqired working minutes and the sum of
  * it's tasks length.
  * 
- * The statistics are only valid if updateStatistisc() was called since the last modification.
- * 
  * @author Kristóf Dan
  */
 

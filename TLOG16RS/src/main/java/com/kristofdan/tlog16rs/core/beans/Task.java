@@ -57,8 +57,8 @@ public class Task {
     public Task(String taskId, String comment, String startTimeString, String endTimeString)
         throws Exception
     {
-        LocalTime startTimeInput = LocalTime.parse(startTimeString);
-        LocalTime endTimeInput = LocalTime.parse(endTimeString);
+        LocalTime startTimeInput = Util.toLocalTime(startTimeString);
+        LocalTime endTimeInput = Util.toLocalTime(endTimeString);
         checkIfValidTimeOrder(startTimeInput,endTimeInput);
         setTaskIdIfValid(taskId);
         this.comment = comment;
@@ -171,7 +171,7 @@ public class Task {
     public void setStartTime(String startTimeAsString)
         throws Exception
     {
-        LocalTime newStartTime = LocalTime.parse(startTimeAsString);
+        LocalTime newStartTime = Util.toLocalTime(startTimeAsString);
         setStartTime(newStartTime);
     }
     
@@ -188,7 +188,7 @@ public class Task {
      * Doesn't update minPerTask, should be you used together with setEndTime.
      */
     public void setStartTimeWithoutChecks(String startTimeAsString){
-        LocalTime newStartTime = LocalTime.parse(startTimeAsString);
+        LocalTime newStartTime = Util.toLocalTime(startTimeAsString);
         startTime = newStartTime;
     }
 
@@ -204,7 +204,7 @@ public class Task {
     public void setEndTime(String endTimeAsString)
         throws Exception
     {
-        LocalTime newEndTime = LocalTime.parse(endTimeAsString);
+        LocalTime newEndTime = Util.toLocalTime(endTimeAsString);
         checkIfValidTimeOrder(startTime,newEndTime);
         endTime = newEndTime;
         setEndTimeSoThatDurationIsMultipleQuarterHour(startTime, endTime);

@@ -166,4 +166,32 @@ public class UtilTest {
     private void createTaskWithTimeInterval(String startTime, String endTime) throws Exception{
         newTask = new Task("1234","",startTime, endTime);
     }
+    
+    @Test
+    public void localTimeFromHHMM(){
+        LocalTime time = Util.toLocalTime("1220");
+        assertEquals(12, time.getHour());
+        assertEquals(20, time.getMinute());
+    }
+    
+    @Test
+    public void localTimeFromHMM(){
+        LocalTime time = Util.toLocalTime("820");
+        assertEquals(8, time.getHour());
+        assertEquals(20, time.getMinute());
+    }
+    
+    @Test
+    public void localTimeFromHHColonMM(){
+        LocalTime time = Util.toLocalTime("12:20");
+        assertEquals(12, time.getHour());
+        assertEquals(20, time.getMinute());
+    }
+    
+    @Test
+    public void localTimeFromHColonMM(){
+        LocalTime time = Util.toLocalTime("8:20");
+        assertEquals(8, time.getHour());
+        assertEquals(20, time.getMinute());
+    }
 }
